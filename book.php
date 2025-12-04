@@ -39,10 +39,6 @@ switch ($action) {
         handle_create_work($wp_works_url);
         break;
 
-    case "get_work":
-        handle_get_work($wp_works_url);
-        break;
-
     case "update_work":
         handle_update_work($wp_works_url);
         break;
