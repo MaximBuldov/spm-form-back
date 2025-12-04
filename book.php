@@ -70,7 +70,6 @@ function handle_login($login_url, $wp_user, $wp_pass, $works_url)
     }
 
     $data = $resp['body'];
-
     $token  = $data['token']  ?? null;
 
     if (!$token) {
@@ -80,12 +79,12 @@ function handle_login($login_url, $wp_user, $wp_pass, $works_url)
     }
 
     $_SESSION['jwt_token'] = $token;
-
     $result = [
         "prices" => $data["prices"] ?? null,
     ];
 
-    $workId = $_GET["id"] ?? null;
+    $workId = $body['work'] ?? null;
+    $token  = $body['token'] ?? null;
     if ($workId) {
         $url = $works_url . "/" . $workId . '?_fields=acf,id,author,date';
         $resp = wp_get_json($url, $token);
@@ -93,14 +92,10 @@ function handle_login($login_url, $wp_user, $wp_pass, $works_url)
         $work = $resp['body'];
 
         $phoneFromWp = $work['acf']['customer_info']['customer_phone'] ?? '';
-        $frontPhone = $_GET["token"] ?? null;
 
-        if ($frontPhone !== $phoneFromWp) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Forbidden']);
+        if ($token === $phoneFromWp) {
+            $result['work'] = $work ?? null;
         }
-
-        $result['work'] = $work ?? null;
     }
 
     http_response_code(200);
