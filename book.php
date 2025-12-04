@@ -119,34 +119,6 @@ function handle_create_work(string $works_url)
     echo json_encode($resp["body"]);
 }
 
-function handle_get_work(string $works_url)
-{
-    if (empty($_SESSION["jwt_token"])) {
-        http_response_code(401);
-        echo json_encode(["error" => "Not authenticated (no token in session)", "session" => $_SESSION]);
-        return;
-    }
-
-    $id = $_GET["id"] ?? null;
-    if (!$id) {
-        http_response_code(400);
-        echo json_encode(["error" => "Missing id"]);
-        return;
-    }
-
-    $url = $works_url . "/" . $id;
-
-    $resp = wp_get_json($url, $_SESSION["jwt_token"]);
-
-    if ($resp["error"]) {
-        http_response_code(400);
-        echo json_encode(["error" => "Fetch failed", "details" => $resp["body"]]);
-        return;
-    }
-
-    echo json_encode($resp["body"]);
-}
-
 function handle_update_work(string $works_url)
 {
     if (empty($_SESSION["jwt_token"])) {
@@ -155,14 +127,14 @@ function handle_update_work(string $works_url)
         return;
     }
 
-    $id = $_GET["id"] ?? null;
+    $data = json_decode(file_get_contents("php://input"), true) ?? [];
+
+    $id = $data["id"] ?? null;
     if (!$id) {
         http_response_code(400);
-        echo json_encode(["error" => "Missing id"]);
+        echo json_encode(["error" => $data]);
         return;
     }
-
-    $data = json_decode(file_get_contents("php://input"), true) ?? [];
 
     $url = $works_url . "/" . $id;
 
