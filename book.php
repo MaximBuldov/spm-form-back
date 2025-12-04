@@ -81,12 +81,11 @@ function handle_login($login_url, $wp_user, $wp_pass, $works_url)
     $_SESSION['jwt_token'] = $token;
     $result = [
         "prices" => $data["prices"] ?? null,
-        "data" => $body ?? null,
     ];
 
     $workId = $body['work'] ?? null;
-    $token  = $body['token'] ?? null;
-    if ($workId) {
+    $phone  = $body['token'] ?? null;
+    if ($workId && $phone) {
         $url = $works_url . "/" . $workId . '?_fields=acf,id,author,date';
         $resp = wp_get_json($url, $token);
 
@@ -94,7 +93,7 @@ function handle_login($login_url, $wp_user, $wp_pass, $works_url)
 
         $phoneFromWp = $work['acf']['customer_info']['customer_phone'] ?? '';
 
-        if ($token === $phoneFromWp) {
+        if ($phone === $phoneFromWp) {
             $result['work'] = $work ?? null;
         }
     }
