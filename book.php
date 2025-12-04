@@ -81,6 +81,7 @@ function handle_login($login_url, $wp_user, $wp_pass, $works_url)
     $_SESSION['jwt_token'] = $token;
     $result = [
         "prices" => $data["prices"] ?? null,
+        "data" => $body ?? null,
     ];
 
     $workId = $body['work'] ?? null;
