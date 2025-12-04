@@ -26,10 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// стартуем сессию — тут будем хранить токены
 session_start();
 
-// какой "эндпоинт" вызываем
 $action = $_GET['action'] ?? null;
 
 switch ($action) {
@@ -73,7 +71,6 @@ function handle_login($login_url, $wp_user, $wp_pass, $works_url)
 
     $data = $resp['body'];
 
-    // tokens from WP
     $token  = $data['token']  ?? null;
 
     if (!$token) {
@@ -92,7 +89,18 @@ function handle_login($login_url, $wp_user, $wp_pass, $works_url)
     if ($workId) {
         $url = $works_url . "/" . $workId . '?_fields=acf,id,author,date';
         $resp = wp_get_json($url, $token);
-        $result['work'] = $resp['body'] ?? null;
+
+        $work = $resp['body'];
+
+        $phoneFromWp = $work['acf']['customer_info']['customer_phone'] ?? '';
+        $frontPhone = $_GET["token"] ?? null;
+
+        if ($frontPhone !== $phoneFromWp) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden']);
+        }
+
+        $result['work'] = $work ?? null;
     }
 
     http_response_code(200);
