@@ -1,5 +1,5 @@
 <?php
-$allowed_origin = 'http://localhost:3000';
+$allowed_origin = 'https://smartpeoplemoving.com';
 $base_url       = "https://db.smartpeoplemoving.com/wp-json";
 $wp_login_url   = $base_url . "/jwt-auth/v1/token";
 $wp_works_url   = $base_url . "/wp/v2/works";
@@ -82,14 +82,25 @@ function handle_login($login_url, $wp_user, $wp_pass, $works_url)
     $workId = $body['work'] ?? null;
     $phone  = $body['token'] ?? null;
     if ($workId && $phone) {
-        $url = $works_url . "/" . $workId . '?_fields=acf.customer_info,acf.date,acf.state,id,author,date';
+        $url = $works_url . "/" . $workId . '?_fields=acf.customer_info,acf.date,acf.state,id,author,date,acf.watched';
         $resp = wp_get_json($url, $token);
 
         $work = $resp['body'];
 
+        $watched = $work['acf']['watched'];
         $phoneFromWp = $work['acf']['customer_info']['customer_phone'] ?? '';
 
         if ($phone === $phoneFromWp) {
+            if (!$watched) {
+                $updatePayload = [
+                    'acf' => [
+                        'watched' => true,
+                    ],
+                ];
+                wp_post_json($works_url . "/" . $workId, $updatePayload, $token);
+                $work['acf']['watched'] = true;
+            }
+
             $result['work'] = $work ?? null;
         }
     }
