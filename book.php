@@ -83,7 +83,7 @@ function handle_login($login_url, $wp_user, $wp_pass, $works_url)
     $workId = $body['work'] ?? null;
     $phone  = $body['token'] ?? null;
     if ($workId && $phone) {
-        $url = $works_url . "/" . $workId . '?_fields=acf.customer_info,acf.date,acf.state,id,author,date,acf.watched';
+        $url = $works_url . "/" . $workId . '?_fields=acf.customer_info,acf.date,acf.state,id,author,date,acf.watched,acf.paid,acf.deposit';
         $resp = wp_get_json($url, $token);
 
         $work = $resp['body'];
