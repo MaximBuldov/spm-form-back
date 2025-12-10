@@ -11,7 +11,7 @@ function handle_login(string $login_url, string $wp_user, string $wp_pass, strin
 
     if ($resp['error']) {
         http_response_code(401);
-        echo json_encode(['error' => 'Login failed', 'details' => $resp['body']]);
+        echo json_encode(['error' => 'Login failed', 'details' => $resp]);
         return;
     }
 
