@@ -5,6 +5,7 @@ require __DIR__ . '/lib/wp.php';
 require __DIR__ . '/lib/login.php';
 require __DIR__ . '/lib/create.php';
 require __DIR__ . '/lib/update.php';
+require __DIR__ . '/lib/intent.php';
 
 session_start();
 
@@ -21,6 +22,10 @@ switch ($action) {
 
     case 'update_work':
         handle_update_work($wp_works_url);
+        break;
+
+    case 'create_intent':
+        handle_create_intent($wp_works_url);
         break;
 
     default:
