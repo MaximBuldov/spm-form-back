@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '../vendor/autoload';
 
 \Stripe\Stripe::setApiKey(getenv('STRIPE_SECRET'));
 $allowed_origin = 'http://localhost:3000';
