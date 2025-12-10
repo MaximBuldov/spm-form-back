@@ -8,6 +8,7 @@ $allowed_origins = [
     'https://smartpeoplemoving.com',
 ];
 
+$base_url     = "https://db.smartpeoplemoving.com/wp-json";
 $wp_login_url = $base_url . '/jwt-auth/v1/token';
 $wp_works_url = $base_url . '/wp/v2/works';
 
