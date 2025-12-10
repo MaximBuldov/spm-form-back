@@ -26,7 +26,7 @@ try {
     exit;
 }
 
-if ($event->type === 'payment_intent_succeeded') {
+if ($event->type === 'payment_intent.succeeded') {
     $paymentIntent = $event->data->object;
 
     $workId = isset($paymentIntent->metadata->work_id)
