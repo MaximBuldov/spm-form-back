@@ -1,10 +1,10 @@
 <?php
-require __DIR__ . '/config.php';
-require __DIR__ . '/http.php';
-require __DIR__ . '/wp.php';
-require __DIR__ . '/login.php';
-require __DIR__ . '/create.php';
-require __DIR__ . '/update.php';
+require __DIR__ . '/lib/config.php';
+require __DIR__ . '/lib/http.php';
+require __DIR__ . '/lib/wp.php';
+require __DIR__ . '/lib/login.php';
+require __DIR__ . '/lib/create.php';
+require __DIR__ . '/lib/update.php';
 
 session_start();
 
