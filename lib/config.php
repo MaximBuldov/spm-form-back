@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '../vendor/autoload';
+require __DIR__ . '/../vendor/autoload';
 
 \Stripe\Stripe::setApiKey(getenv('STRIPE_SECRET'));
 
