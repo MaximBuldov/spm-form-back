@@ -67,7 +67,6 @@ if ($event->type === 'payment_intent.succeeded') {
                 'acf' => [
                     'paid'      => true,
                     'charge_id' => $chargeId,
-                    'revision_author' => '1',
                 ],
             ];
 
