@@ -11,9 +11,8 @@ $wp_user = getenv('WP_USER');
 $wp_pass = getenv('WP_PASS');
 
 $from       = isset($_POST['From']) ? trim((string)$_POST['From']) : '';
-$to         = isset($_POST['To']) ? trim((string)$_POST['To']) : '';
+$phone = preg_replace('/^\+1/', '', $from);
 $body       = isset($_POST['Body']) ? trim((string)$_POST['Body']) : '';
-$messageSid = isset($_POST['MessageSid']) ? trim((string)$_POST['MessageSid']) : '';
 
 if ($from === '' || $body === '') {
   exit;
@@ -33,10 +32,9 @@ if ($loginResp['error'] || empty($loginResp['body']['token'])) {
 $token = $loginResp['body']['token'];
 
 $payload = [
-  "title"   => "Inbound SMS from " . $from,
   "status"  => "publish",
   "acf" => [
-    "customer_phone" => $from,
+    "customer_phone" => $phone,
     "message" => $body,
   ],
 ];
