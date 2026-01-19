@@ -24,7 +24,6 @@ $loginResp = http_post_json($wp_login_url, [
 ]);
 
 if ($loginResp['error'] || empty($loginResp['body']['token'])) {
-  // Twilio expects 200, but log it
   error_log('[TWILIO_INBOUND] WP login failed: ' . json_encode($loginResp['body']));
   exit;
 }
