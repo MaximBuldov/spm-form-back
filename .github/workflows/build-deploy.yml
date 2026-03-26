@@ -37,7 +37,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
-          server-dir: ajax/
+          server-dir: wp-content/plugins/spm-form-backend/
           dangerous-clean-slate: false
           exclude: |
             **/.git*

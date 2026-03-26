@@ -1,64 +1,50 @@
 <?php
-function handle_login(string $login_url, string $wp_user, string $wp_pass, string $works_url): void {
-    $body = json_decode(file_get_contents('php://input'), true) ?? [];
+defined('ABSPATH') || exit;
 
-    $payload = [
-        'username' => $wp_user,
-        'password' => $wp_pass,
-    ];
+function spm_handle_prices(WP_REST_Request $request): WP_REST_Response {
+    spm_session_start();
+    $cfg  = spm_config();
+    $body = $request->get_json_params() ?? [];
 
-    $resp = wp_post_json($login_url, $payload);
+    $resp = spm_post_json($cfg['wp_login_url'], [
+        'username' => $cfg['wp_user'],
+        'password' => $cfg['wp_pass'],
+    ]);
 
     if ($resp['error']) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Login failed', 'details' => $resp, 'url' => $login_url]);
-        return;
+        return new WP_REST_Response(['error' => 'Login failed', 'details' => $resp['body']], 401);
     }
 
-    $data  = $resp['body'];
-    $token = $data['token'] ?? null;
-
+    $token = $resp['body']['token'] ?? null;
     if (!$token) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Token not returned']);
-        return;
+        return new WP_REST_Response(['error' => 'Token not returned'], 401);
     }
 
-    $_SESSION['jwt_token'] = $token;
+    spm_session_set('jwt_token', $token);
 
-    $result = [
-        'prices' => $data['prices'] ?? null,
-    ];
+    $result = ['prices' => $resp['body']['prices'] ?? null];
 
     $workId = $body['work']  ?? null;
     $phone  = $body['token'] ?? null;
 
     if ($workId && $phone) {
-        $url  = $works_url . '/' . $workId . '?_fields=acf.customer_info,acf.date,acf.state,id,author,date,acf.watched,acf.paid,acf.deposit';
-        $resp = wp_get_json($url, $token);
-
-        $work = $resp['body'] ?? null;
+        $url      = $cfg['wp_works_url'] . '/' . $workId . '?_fields=acf.customer_info,acf.date,acf.state,id,author,date,acf.watched,acf.paid,acf.deposit';
+        $workResp = spm_get_json($url, $token);
+        $work     = $workResp['body'] ?? null;
 
         if ($work && isset($work['acf']['customer_info'])) {
-            $watched      = $work['acf']['watched'] ?? false;
-            $phoneFromWp  = $work['acf']['customer_info']['customer_phone'] ?? '';
+            $watched     = $work['acf']['watched'] ?? false;
+            $phoneFromWp = $work['acf']['customer_info']['customer_phone'] ?? '';
 
             if ($phone === $phoneFromWp) {
                 if (!$watched) {
-                    $updatePayload = [
-                        'acf' => [
-                            'watched' => true,
-                        ],
-                    ];
-                    wp_post_json($works_url . '/' . $workId, $updatePayload, $token);
+                    spm_post_json($cfg['wp_works_url'] . '/' . $workId, ['acf' => ['watched' => true]], $token);
                     $work['acf']['watched'] = true;
                 }
-
                 $result['work'] = $work;
             }
         }
     }
 
-    http_response_code(200);
-    echo json_encode($result);
+    return new WP_REST_Response($result, 200);
 }

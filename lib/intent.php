@@ -1,60 +1,53 @@
 <?php
-function handle_create_intent(string $works_url): void {
-    if (empty($_SESSION['jwt_token'])) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Not authenticated']);
-        return;
+defined('ABSPATH') || exit;
+
+function spm_handle_create_intent(WP_REST_Request $request): WP_REST_Response {
+    spm_session_start();
+    $token = spm_session_get('jwt_token');
+
+    if (!$token) {
+        return new WP_REST_Response(['error' => 'Not authenticated'], 401);
     }
 
-    $body   = json_decode(file_get_contents('php://input'), true) ?? [];
+    $cfg    = spm_config();
+    $body   = $request->get_json_params() ?? [];
     $workId = $body['work']  ?? null;
     $phone  = $body['token'] ?? null;
 
     if (!$workId || !$phone) {
-        http_response_code(400);
-        echo json_encode(['error' => 'work and phone are required']);
-        return;
+        return new WP_REST_Response(['error' => 'work and phone are required'], 400);
     }
 
-    $url = $works_url . '/' . (int)$workId . '?_fields=acf.customer_info,acf.deposit,acf.paid,id';
-    $resp = wp_get_json($url, $_SESSION['jwt_token']);
+    $url  = $cfg['wp_works_url'] . '/' . (int)$workId . '?_fields=acf.customer_info,acf.deposit,acf.paid,id';
+    $resp = spm_get_json($url, $token);
 
     if ($resp['error'] || empty($resp['body']['id'])) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Work not found', 'details' => $resp['body'] ?? null]);
-        return;
+        return new WP_REST_Response(['error' => 'Work not found', 'details' => $resp['body'] ?? null], 404);
     }
 
-    $work = $resp['body'];
-
+    $work        = $resp['body'];
     $phoneFromWp = $work['acf']['customer_info']['customer_phone'] ?? '';
 
     $normalize = static function (string $p): string {
-        $clean = preg_replace('/\D+/', '', $p);
-        return $clean ?: '';
+        return preg_replace('/\D+/', '', $p) ?: '';
     };
 
     if ($normalize((string)$phone) !== $normalize((string)$phoneFromWp)) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Phone does not match']);
-        return;
+        return new WP_REST_Response(['error' => 'Phone does not match'], 403);
     }
 
-    $paid = (bool)($work['acf']['paid'] ?? false);
-    if ($paid) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Already paid']);
-        return;
+    if ((bool)($work['acf']['paid'] ?? false)) {
+        return new WP_REST_Response(['error' => 'Already paid'], 400);
     }
 
     $deposit = $work['acf']['deposit'] ?? null;
     $amount  = (int) round(((float)$deposit) * 100);
 
     if ($amount <= 0) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid deposit amount', 'deposit' => $deposit]);
-        return;
+        return new WP_REST_Response(['error' => 'Invalid deposit amount', 'deposit' => $deposit], 400);
     }
+
+    \Stripe\Stripe::setApiKey($cfg['stripe_secret']);
 
     try {
         $intent = \Stripe\PaymentIntent::create([
@@ -66,18 +59,13 @@ function handle_create_intent(string $works_url): void {
             ],
         ]);
     } catch (\Stripe\Exception\ApiErrorException $e) {
-        http_response_code(500);
-        echo json_encode([
-            'error'   => 'Stripe error',
-            'message' => $e->getMessage(),
-        ]);
-        return;
+        return new WP_REST_Response(['error' => 'Stripe error', 'message' => $e->getMessage()], 500);
     }
 
-    echo json_encode([
+    return new WP_REST_Response([
         'clientSecret' => $intent->client_secret,
         'amount'       => $intent->amount,
         'currency'     => $intent->currency,
         'workId'       => $workId,
-    ]);
+    ], 200);
 }
